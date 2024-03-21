@@ -6,7 +6,6 @@ from sklearn.linear_model import LinearRegression
 from datetime import datetime, timedelta
 from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.graph_objs as go
 import os
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -19,7 +18,7 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from prophet import Prophet
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-import pygwalker as pyg
+# import pygwalker as pyg
 
 
 def add_logo():
@@ -303,19 +302,19 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
 
             if 'Linear' in model:                    
                 # Store results in the forecast_results DataFrame
-                forecast_results[f"{product_name} Linear Forecast"] = lf['CalendarizedSales'].round(2)
+                forecast_results[f"{product_name} Linear Forecast"] = lf['CalendarizedSales'].round(1)
 
             if 'Prophet' in model:
                 prophet_forecast_result = prophet_forecast_decalendarized(selected_data, dateparams['Forecast Start Date'], dateparams['Forecast End Date'], 'DecalendarizedSales')
                 pf= prophet_forecast_result.merge(df2,on='Dataperiod')
                 pf['CalendarizedSales']=calculate_calendarized_sales(pf['Prophet Forecast'], df2['Calenderization'])
-                forecast_results[f"{product_name} Prophet Forecast"] = pf['CalendarizedSales'].round(2)
+                forecast_results[f"{product_name} Prophet Forecast"] = pf['CalendarizedSales'].round(1)
 
             if 'Sarima' in model:    
                 sarima_forecast_result = sarima_forecast_decalendarized(selected_data, dateparams['Forecast Start Date'], dateparams['Forecast End Date'], 'DecalendarizedSales',ss['model_params']['Sarima'][0] ,ss['model_params']['Sarima'][1] )
                 sf=sarima_forecast_result.merge(df2,on='Dataperiod')
                 sf['CalendarizedSales']=calculate_calendarized_sales(sf['SARIMA Forecast'], df2['Calenderization'])
-                forecast_results[f"{product_name} SARIMA Forecast"] = sf['CalendarizedSales'].round(2)
+                forecast_results[f"{product_name} SARIMA Forecast"] = sf['CalendarizedSales'].round(1)
 
             if 'Exponential' in model:
                 exponential_forecast_result = exponential_forecast_decalendarized(selected_data,dateparams['Forecast Start Date'], dateparams['Forecast End Date'], 'DecalendarizedSales', 1 - modelparams['Exponential'][3] / 100,seasonal_periods=modelparams['Exponential'][2], trend=modelparams['Exponential'][0], seasonal=modelparams['Exponential'][1])
@@ -323,15 +322,15 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
                 ef['CalendarizedSales']=calculate_calendarized_sales(ef['Exponential Forecast'], df2['Calenderization'])
                 ef['UpperLimits']=calculate_calendarized_sales(ef['Upper CI'], df2['Calenderization'])
                 ef['LowerLimits']=calculate_calendarized_sales(ef['Lower CI'], df2['Calenderization'])
-                forecast_results[f"{product_name} Exponential Forecast"] =ef['CalendarizedSales'].round(2)
-                forecast_results[f"{product_name} Upper Limit"] =  ef['UpperLimits'].round(2)
-                forecast_results[f"{product_name} Lower Limit"] =  ef['LowerLimits'].round(2)
+                forecast_results[f"{product_name} Exponential Forecast"] =ef['CalendarizedSales'].round(1)
+                forecast_results[f"{product_name} Upper Limit"] =  ef['UpperLimits'].round(1)
+                forecast_results[f"{product_name} Lower Limit"] =  ef['LowerLimits'].round(1)
             
             if 'Gaussian' in model:
                 gaussian_forecast_result = gaussian_forecast_decalendarized(selected_data, dateparams['Forecast Start Date'], dateparams['Forecast End Date'], 'DecalendarizedSales')
                 gf=gaussian_forecast_result.merge(df2,on='Dataperiod')
                 gf['CalendarizedSales']=calculate_calendarized_sales(gf['Gaussian Forecast'], df2['Calenderization'])                             
-                forecast_results[f"{product_name} Gaussian Forecast"] = gf['CalendarizedSales'].round(2)   
+                forecast_results[f"{product_name} Gaussian Forecast"] = gf['CalendarizedSales'].round(1)   
             
         # Include the date column in the forecast_results DataFrame
         forecast_results['Date'] = lf['Dataperiod']
@@ -358,6 +357,7 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
             result.rename(columns={'Dataperiod':'Date'},inplace=True)
             result=result[['Date','month','Split']]
             dfs=df.copy()
+            dfs['Date'] = pd.to_datetime(dfs['Date'])
             dfs['month']=dfs['Date'].dt.month
             finaldf=dfs.merge(result,how='left',on=['Date','month'])
             finaldf['Split'].fillna(1,inplace=True)
@@ -369,13 +369,15 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
 
             if dateparams['selected_type']=='Quarterly':
                 pivot_df = final_df.pivot_table(index=['Product', 'Territory', 'Forecast Method'], columns='Date', values='Value')
-                pivot_df['Total'] =  pivot_df.sum(axis=1)
+                pivot_df['Total'] =  pivot_df.sum(axis=1).round(1)
                 dfgraph=final_df.copy()
             else:
-                df['Date']=df['Date'].dt.date
-                pivot_df = df.pivot_table(index=['Product', 'Territory', 'Forecast Method'], columns='Date', values='Value')
-                pivot_df['Total'] =  pivot_df.sum(axis=1)
-                dfgraph=df.copy()
+                dfp=df.copy()
+                dfp['Date'] = pd.to_datetime(df['Date'])
+                dfp['Date']=dfp['Date'].dt.date
+                pivot_df = dfp.pivot_table(index=['Product', 'Territory', 'Forecast Method'], columns='Date', values='Value')
+                pivot_df['Total'] =  pivot_df.sum(axis=1).round(1)
+                dfgraph=dfp.copy()
                 # Assuming pivot_df is your DataFrame
             total_column = pivot_df.pop('Total')  # Extract 'Total' column
             pivot_df.insert(0, 'Total', total_column)  # Insert 'Total' column at the first position
@@ -386,7 +388,7 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
             dft1=pd.melt(dft,id_vars=['Product','Territory'],var_name='Date',value_name='Value')
             # merged_df = pd.merge(dft1, df, on=['Product', 'Territory', 'Date'], how='outer')
             st.markdown("<h3 style='color: #E82373;'>Forecasted Graphs</h3>", unsafe_allow_html=True)
-            st.subheader('Chart 1')
+            st.subheader('Product Forecast')
             # Get unique products and territories
             unique_products = dft1['Product'].unique()
             unique_territories = dft1['Territory'].unique()
@@ -415,6 +417,8 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
                 if 'Prophet' in model:
                     temp_df['Forecast Method']= 'Prophet Forecast'
                 result_df = pd.concat([result_df, temp_df], ignore_index=True)
+            result_df['Date']=pd.to_datetime(result_df['Date'])
+            result_df['Date']=result_df['Date'].dt.date
             combined_df = pd.concat([result_df, dfgraph],ignore_index=True)
             
             # Filter data based on selected products and territories
@@ -449,7 +453,7 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
 
 
             st.markdown('---')
-            st.subheader('Chart 2')
+            st.subheader('Combined Forecast ')
             unique_product = dft1['Product'].unique()
             unique_territorie = dft1['Territory'].unique()
             list_of_forecast_methods = combined_df['Forecast Method'].unique()
@@ -498,7 +502,27 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
             
 
             st.subheader('Summary')
-            f13=combined_df.groupby(['Product','Forecast Method'])['Value'].sum().reset_index()
+            # Assuming dateparams['Baseline Start Date'] and dateparams['Baseline End Date'] are Timestamp objects
+            st.write(dateparams['selected_type'],'Forecast')
+            data = {
+                'Parameter': ['Baseline Start Date', 'Baseline End Date', 'Forecast Start Date', 'Forecast End Date'],
+                'Date': [
+                    dateparams['Baseline Start Date'].date(),
+                    dateparams['Baseline End Date'].date(),
+                    dateparams['Forecast Start Date'].date(),
+                    dateparams['Forecast End Date'].date()
+                ]
+            }
+            df = pd.DataFrame(data)
+            s1 = dict(selector='th', props=[('text-align', 'center')])
+            s2 = dict(selector='td', props=[('text-align', 'center')])
+            # you can include more styling paramteres, check the pandas docs
+            table = df.style.set_table_styles([s1,s2]).hide(axis=0).to_html()     
+            st.write(table, unsafe_allow_html=True)
+            
+            f13=combined_df.groupby(['Product','Forecast Method']).apply(lambda x: x[x['Date'] != x['Date'].min()]['Value'].tail(13).sum()).reset_index()
+            f13.rename(columns={0:'Value'},inplace=True)
+            
             mr13 = filtered_dft1.groupby('Product').tail(13)
             sorted_df = filtered_dft1.sort_values(by=['Product', 'Date'], ascending=[True, False])
             # Group by 'Product' and assign a sequential count within each group
@@ -508,10 +532,10 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
             # Drop the WeekCount column if not needed
             p13.drop(columns=['WeekCount'], inplace=True)
             # f13=combined_df.head(26)         
-            product_mr13 = mr13.groupby('Product')['Value'].sum().round(3)
+            product_mr13 = mr13.groupby('Product')['Value'].sum().round(1)
             
             
-            product_p13 = p13.groupby('Product')['Value'].sum().round(3)
+            product_p13 = p13.groupby('Product')['Value'].sum().round(1)
             # product_f13=f13.groupby(['Product','Forecast Method'])['Value'].sum()
             # Combine product_mr13 and product_p13 into a single DataFrame
             combined_df1 = pd.concat([product_mr13, product_p13], axis=1)
@@ -540,8 +564,23 @@ if ss.uploaded_file is not None and ss.file_uploaded is not None:
             # Calculate growth percentage for each column
             for col in df.columns[1:]:
                 df[col + ' Current 13 weeks Growth %'] = ((df[col] - most_recent_sales[col].iloc[0]) / most_recent_sales[col].iloc[0]) * 100
-                df[col + ' Current 13 weeks Growth %']=df[col + ' Current 13 weeks Growth %'].map('{:.2f}%'.format)
-            st.table(df)
+                df[col + ' Current 13 weeks Growth %']=df[col + ' Current 13 weeks Growth %'].round(1).map('{:.2f}%'.format)
+
+            df_rounded=df
+             # Replace "0.00%" with "-"
+            # df_rounded = df_rounded.replace('0%', '%', regex=True)
+            # df_rounded = df_rounded.astype(str).replace('\0.0', '', regex=True)
+            # df_rounded = df_rounded.replace('0.0%', '-', regex=True)
+            df_rounded = df.round(1).astype(str).replace({'0.00%': '-', '\.0%': '%'}, regex=True)
+
+            s1 = dict(selector='th', props=[('text-align', 'center')])
+            s2 = dict(selector='td', props=[('text-align', 'center')])
+            # you can include more styling paramteres, check the pandas docs
+            table = df_rounded.style.set_table_styles([s1,s2]).hide(axis=0).to_html()     
+            st.write(table, unsafe_allow_html=True)
+                      
+
+            
             
            
         except ValueError:
