@@ -1,19 +1,6 @@
 ### API FOR Various functions being re-used codes ###
 # Dependencies : 
 import streamlit as st
-from streamlit import session_state as ss
-from api.functions import *
-from datetime import timedelta
-from datetime import datetime
-import numpy as np
-import pandas as pd
-
-# for models -
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, RationalQuadratic, ExpSineSquared
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
-from scipy.stats import t
 
 # This function adds a logo to the side bar 
 # Currently Ponting to the KMK logo 
