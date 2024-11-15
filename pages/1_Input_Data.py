@@ -72,4 +72,4 @@ if ss.file_up:
     # Next Page & Store Data:
     if st.button("Next Page",use_container_width=True):
         ss['weekly'] = weekly
-        st.switch_page('pages/2_📈_Forecasting.py')
+        st.switch_page('pages/2_Forecasting.py')
