@@ -8,3 +8,4 @@ pip install statsmodels==0.14.1
 pip install scipy==1.12.0
 pip install prophet==1.1.5
 pip install plotly==5.24.1
+pip install openpyxl==3.1.2
