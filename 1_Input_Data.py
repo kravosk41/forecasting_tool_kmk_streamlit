@@ -21,6 +21,17 @@ if 'file_up' not in ss: # for weekly file
 
 st.markdown("<h1 style='text-align: center;'>Data Input</h1>", unsafe_allow_html=True)
 
+st.markdown("---")
+
+st.markdown("<h3 style='text-align: left;'><u>Please read the following instructions carefully</u></h3>", unsafe_allow_html=True)
+st.markdown(
+"""
+• Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n
+"""
+)
+
+st.markdown("---")
+
 weekly_file = st.file_uploader('Upload Weekly Sales',type='xlsx')
 if (weekly_file is not None):
     ss.file_up = True
