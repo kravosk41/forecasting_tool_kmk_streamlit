@@ -301,7 +301,7 @@ def linear_forecast(df):
         'type': 'linear'  # To identify forecasted data
     })
     forecast_data['date'] = pd.to_datetime(forecast_data['date'], errors='coerce')
-    cal_fac = pd.read_parquet('input_data\calenderization.parquet')
+    cal_fac = pd.read_parquet('input_data/calenderization.parquet')
     cal = pd.DataFrame({'DATE' : forecast_data['date']})
     cal['MONTH'] = cal['DATE'].dt.to_period('M').dt.to_timestamp()
     cal['DATE'] = cal['DATE'].dt.date

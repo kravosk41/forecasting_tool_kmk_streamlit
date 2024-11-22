@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit import session_state as ss
 from api.functions import *
 import pandas as pd
+import io
 #import io
 
 st.set_page_config(
@@ -33,6 +34,22 @@ st.markdown(
 st.markdown("---")
 
 weekly_file = st.file_uploader('Upload Weekly Sales',type='xlsx')
+
+with st.expander('File Template Here 👇'):
+
+    st.write('Some additonal context text here')
+
+    excel_format_df = pd.DataFrame(columns = ['date','volume'])
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine = 'xlsxwriter') as writer:
+        excel_format_df.to_excel(writer,sheet_name='Sheet1',index=False)
+    st.download_button(
+        data = buffer,
+        label = '⏬ Download Template file',
+        help ='make sure your dates are continuous for best model fitting',
+        use_container_width= True
+    )
+
 if (weekly_file is not None):
     ss.file_up = True
     ss['weekly_file'] = weekly_file
