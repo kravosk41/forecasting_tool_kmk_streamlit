@@ -43,9 +43,9 @@ with st.expander('File Template Here 👇'):
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine = 'xlsxwriter') as writer:
         excel_format_df.to_excel(writer,sheet_name='Sheet1',index=False)
-    st.download_button(
+    st.download_button('⏬ Download Template file',
         data = buffer,
-        label = '⏬ Download Template file',
+        file_name='input_format.xlsx',
         help ='make sure your dates are continuous for best model fitting',
         use_container_width= True
     )
